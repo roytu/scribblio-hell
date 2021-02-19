@@ -33,7 +33,7 @@
                 </button>
 
                 <button onclick="showNameChangeDialog()" class="dialog-button header-button"
-                        alt="Change your name" title="Change your name">
+                        alt="Ändere deinen Benutzernamen" title="Ändere deinen Benutzernamen">
                     <img src="/resources/user.svg" class="header-button-image"/>
                 </button>
             </div>
@@ -57,7 +57,7 @@
                 <div id="center-dialogs">
                     <div id="center-dialog-container">
                         <div id="word-dialog" class="center-dialog">
-                            <span class="dialog-title">Choose a word</span>
+                            <span class="dialog-title">Wähle ein Wort</span>
                             <div class="center-dialog-content">
                                 <div class="word-button-container">
                                     <button id="word-button-zero" class="dialog-button" onclick="chooseWord(0)">Placeholder
@@ -76,11 +76,10 @@
                             <span class="dialog-title">Start the game</span>
                             <div class="center-dialog-content">
                                 <div style="display: flex; flex-direction: column;">
-                                    Change your username:
+                                    Ändere deinen Benutzernamen:
                                     <div style="display: flex; flex-direction: row;">
                                         <input class="namechange-field" type="text" id="namechange-field-start-dialog"></input>
-                                        <button class="dialog-button" onclick="changeName(document.getElementById('namechange-field-start-dialog').value)">Change</button>
-                                        <button class="dialog-button" onclick="changeName('')">Randomize</button>
+                                        <button class="dialog-button" onclick="changeName(document.getElementById('namechange-field-start-dialog').value)">Übernehmen</button>
                                     </div>
                                 </div>
                                 <div class="button-center-wrapper">
@@ -92,15 +91,14 @@
 
                     <div id="center-dialog-container">
                         <div id="unstarted-dialog" class="center-dialog">
-                            <span class="dialog-title">Game hasn't started</span>
+                            <span class="dialog-title">Warte auf Spielstart</span>
                             <div class="center-dialog-content">
                                 <div style="display: flex; flex-direction: column;">
-                                    Please wait for your lobby host to start the game.<br/><br/>
-                                    Change your username:
+                                    Bitte warte bis der Moderator das Spiel startet.<br/><br/>
+                                    Ändere deinen Benutzernamen:
                                     <div style="display: flex; flex-direction: row;">
                                         <input class="namechange-field" type="text" id="namechange-field-unstarted-dialog"></input>
-                                        <button class="dialog-button" onclick="changeName(document.getElementById('namechange-field-unstarted-dialog').value)">Change</button>
-                                        <button class="dialog-button" onclick="changeName('')">Randomize</button>
+                                        <button class="dialog-button" onclick="changeName(document.getElementById('namechange-field-unstarted-dialog').value)">Übernehmen</button>
                                     </div>
                                 </div>
                             </div>
@@ -109,13 +107,12 @@
 
                     <div id="center-dialog-container">
                         <div id="namechange-dialog" class="center-dialog">
-                            <span class="dialog-title">Change your username</span>
+                            <span class="dialog-title">Ändere deinen Benutzernamen</span>
                             <div class="center-dialog-content">
                                 <div style="display: flex; flex-direction: column;">
                                     <div style="display: flex; flex-direction: row;">
                                         <input class="namechange-field" type="text" id="namechange-field"></input>
-                                        <button class="dialog-button" onclick="changeName(document.getElementById('namechange-field').value)">Change</button>
-                                        <button class="dialog-button" onclick="changeName('')">Randomize</button>
+                                        <button class="dialog-button" onclick="changeName(document.getElementById('namechange-field').value)">Übernehmen</button>
                                     </div>
                                     <div class="button-center-wrapper">
                                         <button class="dialog-button" onclick="hideNameChangeDialog()">Close</button>
@@ -770,18 +767,18 @@
             playWav('/resources/plop.wav');
 
             if (parsed.data === ownID) {
-                applyMessage("correct-guess-message", "System", "You have correctly guessed the word.")
+                applyMessage("correct-guess-message", "System", "Du hast das Wort korrekt erraten.")
             } else {
                 for (let i = 0; i < cachedPlayers.length; i++) {
                     let player = cachedPlayers[i];
                     if (player.id === parsed.data) {
-                        applyMessage("correct-guess-message", "System", player.name + " correctly guessed the word.")
+                        applyMessage("correct-guess-message", "System", player.name + " hat das Wort korrekt erraten.")
                         break;
                     }
                 }
             }
         } else if (parsed.type === "close-guess") {
-            applyMessage("close-guess-message", "System", "'"+ parsed.data + "'' is very close.")
+            applyMessage("close-guess-message", "System", "'"+ parsed.data + "'' ist nah dran.")
         } else if (parsed.type === "update-wordhint") {
             applyWordHints(parsed.data);
         } else if (parsed.type === "message") {
@@ -820,9 +817,9 @@
 
             if (parsed.data.previousWord !== null) {
                 if (parsed.data.previousWord === "") {
-                    applyMessage("system-message", "System", "Round over. No word was chosen.");
+                    applyMessage("system-message", "System", "Runde vorbei. Es wurde kein Wort gewählt.");
                 } else {
-                    applyMessage("system-message", "System", "Round over. Previous word was '"+parsed.data.previousWord+"'");
+                    applyMessage("system-message", "System", "Runde vorbei. Das letzte Wort war '"+parsed.data.previousWord+"'");
                 }
             }
 
