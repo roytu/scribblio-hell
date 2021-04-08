@@ -80,10 +80,6 @@
                                 <div class="word-button-container">
                                     <button id="word-button-zero" class="dialog-button"
                                         onclick="chooseWord(0)"></button>
-                                    <button id="word-button-one" class="dialog-button"
-                                        onclick="chooseWord(1)"></button>
-                                    <button id="word-button-two" class="dialog-button"
-                                        onclick="chooseWord(2)"></button>
                                 </div>
                             </div>
                         </div>
@@ -514,8 +510,6 @@
         const restartButton = document.getElementById("restart-button");
         const wordDialog = document.getElementById("word-dialog");
         const wordButtonZero = document.getElementById("word-button-zero");
-        const wordButtonOne = document.getElementById("word-button-one");
-        const wordButtonTwo = document.getElementById("word-button-two");
 
         const kickDialog = document.getElementById("kick-dialog");
         const kickDialogPlayers = document.getElementById("kick-dialog-players");
@@ -869,7 +863,7 @@
                 type: "choose-word",
                 data: index
             }));
-            allowDrawing = true;
+            allowDrawing = false;
             updateCursor();
             wordDialog.style.visibility = "hidden";
         }
@@ -940,8 +934,8 @@
                     appendMessage(null, parsed.data.author, parsed.data.content);
                 } else if (parsed.type === "system-message") {
                     appendMessage("system-message", '{{.Translation.Get "system"}}', parsed.data);
-                } else if (parsed.type === "non-guessing-player-message") {
-                    appendMessage("non-guessing-player-message", parsed.data.author, parsed.data.content);
+                } else if (parsed.type === "non-drawing-player-message") {
+                    appendMessage("non-drawing-player-message", parsed.data.author, parsed.data.content);
                 } else if (parsed.type === "line") {
                     drawLine(context, parsed.data.fromX * scaleDownFactor(), parsed.data.fromY * scaleDownFactor(), parsed.data.toX * scaleDownFactor(), parsed.data.toY * scaleDownFactor(), parsed.data.color, parsed.data.lineWidth * scaleDownFactor());
                 } else if (parsed.type === "fill") {
@@ -983,12 +977,12 @@
                             appendMessage("system-message", null, '{{.Translation.Get "round-over-no-word"}}'.format(parsed.data.previousWord));
                         }
                     }
-                    allowDrawing = false;
+                    allowDrawing = true;
                     updateCursor();
                 } else if (parsed.type === "your-turn") {
                     playWav('{{.RootPath}}/resources/your-turn.wav');
                     waitChooseDialog.style.visibility = "hidden";
-                    promptWords(parsed.data[0], parsed.data[1], parsed.data[2]);
+                    promptWords(parsed.data[0]);
                 } else if (parsed.type === "drawing") {
                     applyDrawData(parsed.data);
                 } else if (parsed.type === "kick-vote") {
@@ -1159,10 +1153,8 @@
             }
         }
 
-        function promptWords(wordOne, wordTwo, wordThree) {
-            wordButtonZero.textContent = wordOne;
-            wordButtonOne.textContent = wordTwo;
-            wordButtonTwo.textContent = wordThree;
+        function promptWords(wordOne) {
+            wordButtonZero.textContent = "I am ready to guess!";
             wordDialog.style.visibility = "visible";
         }
 

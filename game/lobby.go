@@ -154,7 +154,7 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 
 		guesser := lobby.guesser
 		if player == guesser && len(lobby.wordChoice) > 0 {
-			lobby.CurrentWord = lobby.wordChoice[0]
+			lobby.CurrentWord = lobby.wordChoice[chosenIndex] // Always equals 0
 
 			//Depending on how long the word is, a fixed amount of hints
 			//would be too easy or too hard.
@@ -228,7 +228,7 @@ func handleMessage(message string, sender *Player, lobby *Lobby) {
 	}
 
 	if sender.State == Drawing || sender.State == Standby {
-		sendMessageToAllNonGuessing(trimmedMessage, sender, lobby)
+		sendMessageToAllNonDrawing(trimmedMessage, sender, lobby)
 	} else if sender.State == Guessing {
 		lowerCasedInput := lobby.lowercaser.String(trimmedMessage)
 		currentWord := lobby.CurrentWord
@@ -304,14 +304,14 @@ func sendMessageToAll(message string, sender *Player, lobby *Lobby) {
 	}
 }
 
-func sendMessageToAllNonGuessing(message string, sender *Player, lobby *Lobby) {
-	messageEvent := GameEvent{Type: "non-guessing-player-message", Data: Message{
+func sendMessageToAllNonDrawing(message string, sender *Player, lobby *Lobby) {
+	messageEvent := GameEvent{Type: "non-drawing-player-message", Data: Message{
 		Author:   sender.Name,
 		AuthorID: sender.ID,
 		Content:  discordemojimap.Replace(message),
 	}}
 	for _, target := range lobby.players {
-		if target.State != Guessing {
+		if target.State != Drawing {
 			WriteAsJSON(target, messageEvent)
 		}
 	}
@@ -539,7 +539,7 @@ func advanceLobby(lobby *Lobby) {
 		if otherPlayer.State == Guessing {
 			otherPlayer.LastScore = 0
 		}
-		otherPlayer.State = Guessing
+		otherPlayer.State = Drawing
 		otherPlayer.votedForKick = make(map[string]bool)
 	}
 
@@ -557,7 +557,7 @@ func advanceLobby(lobby *Lobby) {
 
 	lobby.ClearDrawing()
 	lobby.guesser = newGuesser
-	lobby.guesser.State = Drawing
+	lobby.guesser.State = Guessing
 	lobby.State = Ongoing
 	lobby.wordChoice = GetRandomWords(1, lobby)
 
@@ -607,7 +607,7 @@ func endGame(lobby *Lobby) {
 func selectNextGuesser(lobby *Lobby) (*Player, bool) {
 	for index, otherPlayer := range lobby.players {
 		if otherPlayer == lobby.guesser {
-			//If we have someone that's drawing, take the next one
+			//If we have someone that's guessing, take the next one
 			for i := index + 1; i < len(lobby.players); i++ {
 				player := lobby.players[i]
 				if player.Connected {
@@ -896,10 +896,10 @@ func (lobby *Lobby) GetAvailableWordHints(player *Player) []*WordHint {
 	//The draw simple gets every character as a word-hint. We basically abuse
 	//the hints for displaying the word, instead of having yet another GUI
 	//element that wastes space.
-	if player.State == Drawing || player.State == Standby {
-		return lobby.wordHintsShown
-	} else {
+	if player.State == Guessing {
 		return lobby.wordHints
+	} else {
+		return lobby.wordHintsShown
 	}
 }
 
@@ -914,7 +914,7 @@ func (lobby *Lobby) JoinPlayer(playerName string) *Player {
 }
 
 func (lobby *Lobby) canDraw(player *Player) bool {
-	return lobby.guesser == player && lobby.CurrentWord != ""
+	return lobby.guesser != player && lobby.CurrentWord != ""
 }
 
 var connectionCharacterReplacer = strings.NewReplacer(" ", "", "-", "", "_", "")
