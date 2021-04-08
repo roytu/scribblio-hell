@@ -33,8 +33,8 @@ type Lobby struct {
 
 	// Whether the game has started, is ongoing or already over.
 	State gameState
-	// drawer references the Player that is currently drawing.
-	drawer *Player
+	// guesser references the Player that is currently guessing.
+	guesser *Player
 	// Owner references the Player that currently owns the lobby.
 	// Meaning this player has rights to restart or change certain settings.
 	Owner *Player

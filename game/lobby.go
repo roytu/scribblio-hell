@@ -152,9 +152,9 @@ func (lobby *Lobby) HandleEvent(raw []byte, received *GameEvent, player *Player)
 			}
 		}
 
-		drawer := lobby.drawer
-		if player == drawer && len(lobby.wordChoice) > 0 && chosenIndex >= 0 && chosenIndex <= 2 {
-			lobby.CurrentWord = lobby.wordChoice[chosenIndex]
+		guesser := lobby.guesser
+		if player == guesser && len(lobby.wordChoice) > 0 {
+			lobby.CurrentWord = lobby.wordChoice[0]
 
 			//Depending on how long the word is, a fixed amount of hints
 			//would be too easy or too hard.
@@ -395,8 +395,8 @@ func kickPlayer(lobby *Lobby, playerToKick *Player, playerToKickIndex int) {
 
 	lobby.players = append(lobby.players[:playerToKickIndex], lobby.players[playerToKickIndex+1:]...)
 
-	if lobby.drawer == playerToKick {
-		TriggerUpdateEvent("drawer-kicked", nil, lobby)
+	if lobby.guesser == playerToKick {
+		TriggerUpdateEvent("guesser-kicked", nil, lobby)
 		//Since the drawing person has been kicked, that probably means that he/she was trolling, therefore
 		//we redact everyones last earned score.
 		for _, otherPlayer := range lobby.players {
@@ -404,7 +404,7 @@ func kickPlayer(lobby *Lobby, playerToKick *Player, playerToKickIndex int) {
 			otherPlayer.LastScore = 0
 		}
 		lobby.scoreEarnedByGuessers = 0
-		//We must absolutely not set lobby.drawer to nil, since this would cause the drawing order to be ruined.
+		//We must absolutely not set lobby.guesser to nil, since this would cause the drawing order to be ruined.
 	}
 
 	//If the owner is kicked, we choose the next best person as the owner.
@@ -422,7 +422,7 @@ func kickPlayer(lobby *Lobby, playerToKick *Player, playerToKickIndex int) {
 		}
 	}
 
-	if lobby.drawer == playerToKick || !lobby.isAnyoneStillGuessing() {
+	if lobby.guesser == playerToKick || !lobby.isAnyoneStillGuessing() {
 		advanceLobby(lobby)
 	} else {
 		//This isn't necessary in case we need to advanced the lobby, as it has
@@ -502,14 +502,14 @@ func advanceLobby(lobby *Lobby) {
 		lobby.timeLeftTicker = nil
 	}
 
-	//The drawer can potentially be null if he's kicked, in that case we proceed with the round if anyone has already
-	drawer := lobby.drawer
-	if drawer != nil && lobby.scoreEarnedByGuessers > 0 {
+	//The guesser can potentially be null if he's kicked, in that case we proceed with the round if anyone has already
+	guesser := lobby.guesser
+	if guesser != nil && lobby.scoreEarnedByGuessers > 0 {
 
 		//Average score, but minus one player, since the own score is 0 and doesn't count.
 		playerCount := lobby.GetConnectedPlayerCount()
-		//If the drawer isn't connected though, we mustn't subtract from the count.
-		if drawer.Connected {
+		//If the guesser isn't connected though, we mustn't subtract from the count.
+		if guesser.Connected {
 			playerCount--
 		}
 
@@ -518,8 +518,8 @@ func advanceLobby(lobby *Lobby) {
 			averageScore = lobby.scoreEarnedByGuessers / playerCount
 		}
 
-		drawer.LastScore = averageScore
-		drawer.Score += drawer.LastScore
+		guesser.LastScore = averageScore
+		guesser.Score += guesser.LastScore
 	}
 
 	//We need this for the next-turn event, in order to allow the client
@@ -543,7 +543,7 @@ func advanceLobby(lobby *Lobby) {
 		otherPlayer.votedForKick = make(map[string]bool)
 	}
 
-	newDrawer, roundOver := selectNextDrawer(lobby)
+	newGuesser, roundOver := selectNextGuesser(lobby)
 	if roundOver {
 		if lobby.Round == lobby.Rounds {
 			endGame(lobby)
@@ -556,10 +556,10 @@ func advanceLobby(lobby *Lobby) {
 	firstTurn := lobby.State != Ongoing
 
 	lobby.ClearDrawing()
-	lobby.drawer = newDrawer
-	lobby.drawer.State = Drawing
+	lobby.guesser = newGuesser
+	lobby.guesser.State = Drawing
 	lobby.State = Ongoing
-	lobby.wordChoice = GetRandomWords(3, lobby)
+	lobby.wordChoice = GetRandomWords(1, lobby)
 
 	recalculateRanks(lobby)
 
@@ -583,11 +583,11 @@ func advanceLobby(lobby *Lobby) {
 	}
 	TriggerUpdateEvent("next-turn", nextTurnEvent, lobby)
 
-	WriteAsJSON(lobby.drawer, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
+	WriteAsJSON(lobby.guesser, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
 }
 
 func endGame(lobby *Lobby) {
-	lobby.drawer = nil
+	lobby.guesser = nil
 	lobby.Round = 0
 	lobby.State = GameOver
 
@@ -601,12 +601,12 @@ func endGame(lobby *Lobby) {
 	}
 }
 
-// selectNextDrawer returns the next person that's supposed to be drawing, but
+// selectNextGuesser returns the next person that's supposed to be drawing, but
 // doesn't tell the lobby yet. The boolean signals whether the current round is
 // over.
-func selectNextDrawer(lobby *Lobby) (*Player, bool) {
+func selectNextGuesser(lobby *Lobby) (*Player, bool) {
 	for index, otherPlayer := range lobby.players {
-		if otherPlayer == lobby.drawer {
+		if otherPlayer == lobby.guesser {
 			//If we have someone that's drawing, take the next one
 			for i := index + 1; i < len(lobby.players); i++ {
 				player := lobby.players[i]
@@ -854,8 +854,8 @@ func (lobby *Lobby) OnPlayerConnectUnsynchronized(player *Player) {
 	//This state is reached if the player reconnects before having chosen a word.
 	//This can happen if the player refreshes his browser page or the socket
 	//loses connection and reconnects quickly.
-	if lobby.drawer == player && lobby.CurrentWord == "" {
-		WriteAsJSON(lobby.drawer, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
+	if lobby.guesser == player && lobby.CurrentWord == "" {
+		WriteAsJSON(lobby.guesser, &GameEvent{Type: "your-turn", Data: lobby.wordChoice})
 	}
 
 	//TODO Only send to everyone except for the new player, since it's part of the ready event.
@@ -914,7 +914,7 @@ func (lobby *Lobby) JoinPlayer(playerName string) *Player {
 }
 
 func (lobby *Lobby) canDraw(player *Player) bool {
-	return lobby.drawer == player && lobby.CurrentWord != ""
+	return lobby.guesser == player && lobby.CurrentWord != ""
 }
 
 var connectionCharacterReplacer = strings.NewReplacer(" ", "", "-", "", "_", "")
