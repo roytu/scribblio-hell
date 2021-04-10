@@ -15,6 +15,7 @@ var (
 	languageIdentifiers = map[string]string{
 		"english_gb": "en_gb",
 		"english":    "en_us",
+		"classic_skrib":    "classic_skrib",
 		"italian":    "it",
 		"german":     "de",
 		"french":     "fr",

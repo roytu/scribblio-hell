@@ -33,6 +33,7 @@ var (
 	SupportedLanguages = map[string]string{
 		"english_gb": "English (GB)",
 		"english":    "English (US)",
+		"classic_skrib":    "Classic Skribblio",
 		"italian":    "Italian",
 		"german":     "German",
 		"french":     "French",
