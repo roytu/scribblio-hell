@@ -1578,17 +1578,17 @@
         function generateCircleMap(radius) {
             let circleData = [];
 
-            for (x = 0; x < 2 * radius; x++) {
-                circleData[x] = [];
-                for (y = 0; y < 2 * radius; y++) {
-                    const distanceToRadius = Math.sqrt(Math.pow(radius - x, 2) + Math.pow(radius - y, 2));
+            for (xc = 0; xc < 2 * radius; xc++) {
+                circleData[xc] = [];
+                for (yc = 0; yc < 2 * radius; yc++) {
+                    const distanceToRadius = Math.sqrt(Math.pow(radius - xc, 2) + Math.pow(radius - yc, 2));
                     if (distanceToRadius > radius) {
-                        circleData[x][y] = 0;
+                        circleData[xc][yc] = 0;
                     } else if (distanceToRadius < radius - 2) {
                         //optimize for performance: fill circle only when mouse was not moved
-                        circleData[x][y] = 2;
+                        circleData[xc][yc] = 2;
                     } else {
-                        circleData[x][y] = 1;
+                        circleData[xc][yc] = 1;
                     }
                 }
             }
